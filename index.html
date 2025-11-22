@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkHere - De Anza</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        @keyframes slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .animate-slide-in-right { animation: slide-in-right 0.3s ease-out forwards; }
+        
+        @keyframes pop-in { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .animate-pop-in { animation: pop-in 0.2s ease-out forwards; }
+
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: fade-in 0.3s ease-out; }
+
+        body { background-color: #f9fafb; overflow-x: hidden; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        
+        .beige-default { background-color: #E8E4C9; }
+    </style>
+</head>
+<body class="text-gray-900 font-sans antialiased">
+
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="env,react">
+        const { useState, useMemo, useEffect, useRef } = React;
+
+        // --- ICONS ---
+        const IconBase = ({ children, className, onClick }) => (
+            <svg onClick={onClick} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+        const MapPin = (p) => <IconBase {...p}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></IconBase>;
+        const Wifi = (p) => <IconBase {...p}><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></IconBase>;
+        const Zap = (p) => <IconBase {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>;
+        const Clock = (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>;
+        const Send = (p) => <IconBase {...p}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></IconBase>;
+        const Check = (p) => <IconBase {...p}><polyline points="20 6 9 17 4 12"/></IconBase>;
+        const X = (p) => <IconBase {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconBase>;
+        const User = (p) => <IconBase {...p}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>;
+        const Settings = (p) => <IconBase {...p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></IconBase>;
+        const LogOut = (p) => <IconBase {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></IconBase>;
+        const Edit = (p) => <IconBase {...p}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></IconBase>;
+        const Camera = (p) => <IconBase {...p}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></IconBase>;
+        const Navigation = (p) => <IconBase {...p}><polygon points="3 11 22 2 13 21 11 13 3 11"/></IconBase>;
+        const Eye = (p) => <IconBase {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></IconBase>;
+        const EyeOff = (p) => <IconBase {...p}><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></IconBase>;
+        const Lock = (p) => <IconBase {...p}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>;
+        const Heart = (p) => <IconBase {...p}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 12 .5 5.5 5.5 0 0 0 5 8.5c0 2.29 1.5 4.04 3 5.5l4 4Z"/></IconBase>;
+        const HeartFill = (p) => <IconBase {...p} fill="currentColor"><path d="M12 21s-7.5-6.35-9.5-10A5.5 5.5 0 0 1 12 5.5 5.5 5.5 0 0 1 21.5 11c-2 3.65-9.5 10-9.5 10Z"/></IconBase>;
+        const Search = (p) => <IconBase {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></IconBase>;
+
+        const DEFAULT_REVIEWS = {
+            1: [
+                { id: '1a', user: 'Taylor N.', rating: 5, body: 'Quiet space with tons of natural light. Great WiFi.', likes: 4, dislikes: 0, replies: [], createdAt: '2024-02-11T10:00:00Z' },
+                { id: '1b', user: 'Sam P.', rating: 4, body: 'Plenty of outlets but can get chilly—bring a sweater.', likes: 2, dislikes: 0, replies: [], createdAt: '2024-03-02T09:30:00Z' },
+            ],
+            2: [
+                { id: '2a', user: 'Priya R.', rating: 5, body: 'Silent and focused vibes. Perfect before exams.', likes: 3, dislikes: 0, replies: [], createdAt: '2024-04-14T12:15:00Z' },
+                { id: '2b', user: 'Alex C.', rating: 4, body: 'Crowded at noon, but evenings are perfect.', likes: 1, dislikes: 0, replies: [], createdAt: '2024-01-20T15:45:00Z' },
+            ],
+            3: [
+                { id: '3a', user: 'Jordan L.', rating: 4, body: 'Great coffee smell, moderate WiFi. Friendly staff.', likes: 5, dislikes: 1, replies: [], createdAt: '2024-02-27T08:20:00Z' },
+            ],
+            4: [
+                { id: '4a', user: 'Mia K.', rating: 4, body: 'Lots of seating, easy parking. WiFi is solid.', likes: 2, dislikes: 0, replies: [], createdAt: '2024-03-19T18:05:00Z' },
+            ],
+        };
+
+        const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=900&q=80';
+
+        // Normalize image sources so we can handle Google share links and other edge cases
+        const normalizeImageUrl = (url) => {
+            if (!url) return FALLBACK_IMAGE;
+            try {
+                const parsed = new URL(url);
+                const parts = parsed.pathname.split('/').filter(Boolean);
+
+                if (parsed.hostname.includes('drive.google.com')) {
+                    const idIndex = parts.indexOf('d');
+                    const fileId = idIndex >= 0 ? parts[idIndex + 1] : parts[1];
+                    if (fileId) return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                }
+
+                if (parsed.hostname.includes('share.google') || parsed.hostname.includes('photos.app.goo.gl')) {
+                    const shareId = parts.pop();
+                    if (shareId) return `https://lh3.googleusercontent.com/d/${shareId}=w1600`;
+                }
+
+                if (parsed.hostname.includes('lh3.googleusercontent.com') && !parsed.search) {
+                    return `${url}=w1600`;
+                }
+
+                return url;
+            } catch (err) {
+                return url || FALLBACK_IMAGE;
+            }
+        };
+
+        const handleImageError = (e) => {
+            e.target.onerror = null;
+            e.target.src = FALLBACK_IMAGE;
+        };
+
+        // --- SAMPLE FRIEND DATA (replace with Supabase later) ---
+        const SAMPLE_FRIENDS = [
+          {
+            id: 'f-1',
+            name: 'Emily Chen',
+            username: 'emilyc',
+            email: 'emily@example.com',
+            avatar: null,
+            userCode: 'DA-123456'
+          },
+          {
+            id: 'f-2',
+            name: 'Jason Lee',
+            username: 'jasonlee',
+            email: 'jason@example.com',
+            avatar: null,
+            userCode: 'DA-654321'
+          },
+          {
+            id: 'f-3',
+            name: 'Sofia Park',
+            username: 'sofiap',
+            email: 'sofia@example.com',
+            avatar: null,
+            userCode: 'DA-888999'
+          }
+        ];
+
+        // --- UTILS ---
+        const generateUserCode = () => {
+            return 'DA-' + Math.floor(100000 + Math.random() * 900000);
+        };
+
+        const formatClosingIn = (loc, currentHour) => {
+            const hoursLeft = loc.close_hour - currentHour;
+            if (hoursLeft <= 0) return 'Closed';
+            const roundedHalf = Math.max(0.5, Math.round(hoursLeft * 2) / 2);
+            return `Closes in ${roundedHalf} hour${roundedHalf === 1 ? '' : 's'}`;
+        };
+
+        const roundDistance = (miles) => {
+            const val = miles || 1.0;
+            return (Math.round(val * 10) / 10).toFixed(1);
+        };
+
+        const calcRating = (reviews) => {
+            if (!reviews || reviews.length === 0) return 0;
+            const sum = reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+            return Math.round((sum / reviews.length) * 10) / 10;
+        };
+
+        const SUPABASE_URL = "https://zidrhivpzjqwiahatufb.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppZHJoaXZwempxd2lhaGF0dWZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4MzUyNzEsImV4cCI6MjA3OTQxMTI3MX0.ivE8cRhgPBlOonLqM6FCehKrGWFpjoBtP6buv5Tq9SA";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // --- COMPONENTS ---
+
+        // 1. AUTHENTICATION PAGE
+        const AuthScreen = ({ onLogin, onSignup, initialMode = 'login', onBack, pendingEmail = '' }) => {
+            const [isLogin, setIsLogin] = useState(initialMode === 'login');
+            const [formData, setFormData] = useState({
+                name: '',
+                email: '',
+                password: ''
+            });
+            const [error, setError] = useState('');
+            const [info, setInfo] = useState('');
+            const [rememberMe, setRememberMe] = useState(false);
+
+            useEffect(() => {
+                setIsLogin(initialMode === 'login');
+            }, [initialMode]);
+
+            const validateEmail = (email) => {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            };
+
+            const passwordChecks = (pwd) => {
+                const hasUpper = /[A-Z]/.test(pwd);
+                const hasLower = /[a-z]/.test(pwd);
+                const hasNum = /\d/.test(pwd);
+                const longEnough = pwd.length >= 8;
+                return { hasUpper, hasLower, hasNum, longEnough };
+            };
+
+            const validate = () => {
+                if (!formData.email.trim()) return "Email is required.";
+                if (!validateEmail(formData.email.trim())) return "Please use a valid email address.";
+
+                const pwd = formData.password;
+                if (isLogin) {
+                    if (!pwd) return "Password is required.";
+                } else {
+                    const checks = passwordChecks(pwd);
+                    if (!checks.longEnough || !checks.hasUpper || !checks.hasLower || !checks.hasNum) {
+                        return "Password must contain at least 8 characters with uppercase, lowercase, and a number.";
+                    }
+                }
+
+                if (!isLogin && !formData.name.trim()) return "Full name is required.";
+                return null;
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setError('');
+                setInfo('');
+                const validationMsg = validate();
+                if (validationMsg) {
+                    setError(validationMsg);
+                    return;
+                }
+
+                if (isLogin) {
+                    onLogin(formData.email.trim(), formData.password, rememberMe)
+                        .then(res => {
+                            if (res && res.error) setError(res.error);
+                        });
+                    return;
+                }
+
+                onSignup({
+                    name: formData.name.trim(),
+                    email: formData.email.trim(),
+                    password: formData.password
+                }).then(result => {
+                    if (result && result.error) {
+                        setError(result.error);
+                        return;
+                    }
+                    if (result && result.message) {
+                        setInfo(result.message);
+                        setIsLogin(true);
+                    }
+                });
+            };
+
+            const pwdStatus = passwordChecks(formData.password);
+
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 animate-fade-in">
+                    <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                        <div className="text-center mb-8">
+                            <div className="inline-block p-3 bg-amber-600 rounded-xl shadow-lg shadow-amber-200 mb-4">
+                                <MapPin className="w-8 h-8 text-white" />
+                            </div>
+                            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">WorkHere</h1>
+                            <p className="text-gray-500 text-sm mt-2">De Anza College Study Finder</p>
+                        </div>
+
+                        <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-lg">
+                            <button onClick={() => {setIsLogin(true); setError('');}} className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${isLogin ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>Log In</button>
+                            <button onClick={() => {setIsLogin(false); setError('');}} className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${!isLogin ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>Sign Up</button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {!isLogin && (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Full Name</label>
+                                    <input 
+                                        type="text" 
+                                        required
+                                        className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                        placeholder="e.g. Jason Doe"
+                                        value={formData.name}
+                                        onChange={e => setFormData({...formData, name: e.target.value})}
+                                    />
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Email Address</label>
+                                <input 
+                                    type="email" 
+                                    required
+                                    className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                    placeholder="name@example.com"
+                                    value={formData.email}
+                                    onChange={e => setFormData({...formData, email: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Password</label>
+                                <input 
+                                    type="password" 
+                                    required
+                                    className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                    placeholder={isLogin ? "Password" : "Min. 8 chars, 1 uppercase, 1 lowercase, 1 number"}
+                                    value={formData.password}
+                                    onChange={e => setFormData({...formData, password: e.target.value})}
+                                />
+                                {!isLogin && (
+                                    <div className="mt-2 text-[11px] text-gray-600 space-y-1">
+                                        <p className="font-semibold text-gray-700">Password requirements:</p>
+                                        <ul className="list-disc list-inside space-y-0.5">
+                                            <li className={pwdStatus.longEnough ? 'text-green-600' : ''}>At least 8 characters</li>
+                                            <li className={pwdStatus.hasUpper ? 'text-green-600' : ''}>At least 1 uppercase letter</li>
+                                            <li className={pwdStatus.hasLower ? 'text-green-600' : ''}>At least 1 lowercase letter</li>
+                                            <li className={pwdStatus.hasNum ? 'text-green-600' : ''}>At least 1 number</li>
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+
+                            {error && <div className="text-red-500 text-xs font-medium bg-red-50 p-2 rounded border border-red-100 flex items-center gap-1"><X className="w-3 h-3"/> {error}</div>}
+                            {info && <div className="text-green-600 text-xs font-medium bg-green-50 p-2 rounded border border-green-100 flex items-center gap-1"><Check className="w-3 h-3"/> {info}</div>}
+                            {pendingEmail && (
+                                <div className="text-blue-700 text-xs font-medium bg-blue-50 p-3 rounded border border-blue-100">
+                                    We sent a confirmation link to <span className="font-mono">{pendingEmail}</span>. Please confirm your email before signing in.
+                                </div>
+                            )}
+                            {isLogin && (
+                                <label className="flex items-center gap-2 text-sm text-gray-600">
+                                    <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} />
+                                    Remember me on this device
+                                </label>
+                            )}
+
+                            <button type="submit" className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 shadow-lg">
+                                {isLogin ? 'Sign In' : 'Create Account'}
+                            </button>
+                        </form>
+
+                        {isLogin && (
+                            <div className="mt-4 text-sm text-gray-600 bg-gray-50 border border-gray-100 p-3 rounded-lg">
+                                <p className="font-semibold text-gray-800">Don't have an account yet? <span className="underline cursor-pointer" onClick={() => {setIsLogin(false); setError('');}}>Sign up to discover the best study spots around De Anza.</span></p>
+                            </div>
+                        )}
+                        {onBack && (
+                            <div className="mt-4 text-center">
+                                <button type="button" onClick={onBack} className="text-sm text-gray-600 underline">Back to home</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // 2. UPDATE LOCATION POPUP
+        const StatusUpdateModal = ({ isOpen, onClose, locationName, onConfirm }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] animate-fade-in p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-pop-in">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
+                                <Navigation className="w-7 h-7" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900">Update Status?</h3>
+                            <p className="text-gray-500 text-sm mt-2">
+                                Since you are heading to <span className="font-bold text-gray-800">{locationName}</span>, would you like to set this as your current location in your profile?
+                            </p>
+                            
+                            <div className="flex gap-3 w-full mt-6">
+                                <button onClick={onClose} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-lg font-medium text-sm">
+                                    No, Keep Hidden
+                                </button>
+                                <button onClick={onConfirm} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium text-sm shadow-md">
+                                    Yes, Update
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 3. PROFILE DRAWER
+        const ProfileDrawer = ({ isOpen, onClose, user, isCurrentUser, onUpdateUser, onLogout, onToggleSave }) => {
+            const [editMode, setEditMode] = useState(false);
+            const [tempMajor, setTempMajor] = useState('');
+            const fileInputRef = useRef(null);
+
+            useEffect(() => {
+                if(isOpen && user) {
+                    setTempMajor(user.major);
+                    setEditMode(false);
+                }
+            }, [isOpen, user]);
+
+            const handleImageUpload = (e) => {
+                const file = e.target.files[0];
+                if (file && isCurrentUser) {
+                    const imageUrl = URL.createObjectURL(file);
+                    onUpdateUser({...user, avatar: imageUrl});
+                }
+            };
+
+            const saveMajor = () => {
+                onUpdateUser({...user, major: tempMajor});
+                setEditMode(false);
+            };
+
+            const toggleLocationPrivacy = () => {
+                onUpdateUser({...user, locationVisible: !user.locationVisible});
+            };
+
+            const setManualLocation = (locId) => {
+                onUpdateUser({...user, currentLocationId: locId});
+            };
+
+            if (!isOpen || !user) return null;
+
+            const currentLocationObj = user.currentLocationId ? user.locations.find(l => l.id === user.currentLocationId) : null;
+
+            return (
+                <>
+                    <div className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+                    <div className="fixed top-0 right-0 h-full w-full md:w-[33vw] bg-white z-50 shadow-2xl animate-slide-in-right flex flex-col overflow-hidden">
+                        <div className="p-6 bg-gradient-to-br from-amber-600 to-amber-700 text-white relative">
+                             <button onClick={onClose} className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 p-1 rounded-full hover:bg-white/20 transition"><X className="w-5 h-5"/></button>
+                            
+                            <div className="mt-8 flex flex-col items-center">
+                                <div className="relative group">
+                                    {user.avatar ? (
+                                        <img src={user.avatar} className="w-28 h-28 rounded-full border-4 border-white shadow-lg object-cover bg-gray-100" />
+                                    ) : (
+                                        <div className="w-28 h-28 rounded-full border-4 border-white shadow-lg beige-default flex items-center justify-center text-amber-800/30 font-bold text-3xl">
+                                            {user.name[0]}
+                                        </div>
+                                    )}
+                                    
+                                    {isCurrentUser && (
+                                        <button 
+                                            onClick={() => fileInputRef.current.click()}
+                                            className="absolute bottom-0 right-0 bg-gray-900 text-white p-2.5 rounded-full hover:bg-gray-700 transition-colors shadow-lg border-2 border-white cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-[10px] font-bold px-1 hidden group-hover:block transition-all">Edit</span>
+                                                <Camera className="w-4 h-4" />
+                                            </div>
+                                        </button>
+                                    )}
+                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                                </div>
+                                
+                                <h2 className="text-2xl font-bold mt-4 text-center">{user.name}</h2>
+                                
+                                {isCurrentUser && editMode ? (
+                                    <div className="flex items-center gap-2 mt-2 w-full max-w-[200px]">
+                                        <input 
+                                            type="text" 
+                                            value={tempMajor} 
+                                            onChange={e => setTempMajor(e.target.value)}
+                                            className="w-full text-gray-900 px-3 py-1 rounded-lg text-center text-sm focus:outline-none focus:ring-2 focus:ring-white/50 shadow-inner"
+                                            placeholder="Enter Major"
+                                            autoFocus
+                                        />
+                                        <button onClick={saveMajor} className="bg-green-500 text-white p-1 rounded-full hover:bg-green-600"><Check className="w-4 h-4"/></button>
+                                    </div>
+                                ) : (
+                                    <div 
+                                        className={`mt-2 text-amber-100 text-sm px-4 py-1 rounded-full border border-transparent ${isCurrentUser ? 'hover:border-white/30 hover:bg-white/10 cursor-pointer flex items-center gap-2' : ''}`}
+                                        onClick={() => isCurrentUser && setEditMode(true)}
+                                    >
+                                        {user.major || (isCurrentUser ? "Add Major +" : "")} 
+                                        {isCurrentUser && user.major && <Edit className="w-3 h-3 opacity-50" />}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto bg-gray-50 p-6 space-y-6">
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Current Status</h3>
+                                    {isCurrentUser && (
+                                        <button onClick={toggleLocationPrivacy} className={`text-xs font-bold px-2 py-1 rounded-md border flex items-center gap-1 transition-colors ${user.locationVisible ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                                            {user.locationVisible ? <Eye className="w-3 h-3"/> : <EyeOff className="w-3 h-3"/>} 
+                                            {user.locationVisible ? 'Visible' : 'Hidden'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${user.locationVisible && currentLocationObj ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                                        <MapPin className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900">
+                                            {!user.locationVisible ? 'Location Hidden' : (currentLocationObj ? currentLocationObj.name : 'No active location')}
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            {!user.locationVisible ? 'User has turned off visibility' : (currentLocationObj ? 'Checked in manually' : 'Check in to a spot below')}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Save List</h3>
+                                    <span className="text-xs text-gray-500">{(user.saveList && user.saveList.length) || 0} saved</span>
+                                </div>
+                                {user.saveList && user.saveList.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {user.saveList.map(id => {
+                                            const loc = user.locations.find(l => l.id === id);
+                                            if (!loc) return null;
+                                            return (
+                                                <div key={id} className="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-lg p-3">
+                                                    <div>
+                                                        <div className="font-semibold text-gray-900">{loc.name}</div>
+                                                    </div>
+                                                    <button onClick={() => onToggleSave(id)} className="text-red-500 hover:text-red-600 text-xs font-semibold">Remove</button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">No places saved yet. Tap the heart icon on a spot to save it for later.</p>
+                                )}
+                            </div>
+
+                            {isCurrentUser && (
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                    <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center gap-2">
+                                        <Settings className="w-4 h-4 text-gray-500" />
+                                        <span className="text-sm font-bold text-gray-700">Settings</span>
+                                    </div>
+                                    
+                                    <div className="p-4 space-y-4">
+                                        <div className="flex justify-between items-center pb-4 border-b border-gray-100">
+                                            <span className="text-sm text-gray-600">My User Code</span>
+                                            <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 select-all">{user.userCode}</span>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2 uppercase">Set Location Manually</label>
+                                            <select 
+                                                onChange={(e) => setManualLocation(Number(e.target.value))}
+                                                value={user.currentLocationId || 0}
+                                                className="w-full text-sm border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-amber-500 outline-none"
+                                            >
+                                                <option value={0}>-- Not at a study spot --</option>
+                                                {user.locations.map(loc => (
+                                                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                                                ))}
+                                            </select>
+                                            <p className="text-[10px] text-gray-400 mt-1">Select where you are studying to let friends find you.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <button onClick={onLogout} className="w-full p-4 text-left text-red-600 hover:bg-red-50 transition-colors text-sm font-medium flex items-center gap-2 border-t border-gray-100">
+                                        <LogOut className="w-4 h-4" /> Sign Out
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            );
+        };
+
+        // STAR ROW
+        const StarRow = ({ rating }) => {
+            const filled = Math.round(rating);
+            return (
+                <div className="flex items-center gap-1 text-amber-400">
+                    {[0,1,2,3,4].map(i => (
+                        <span key={i} className={i < filled ? 'text-amber-400' : 'text-gray-200'}>★</span>
+                    ))}
+                    <span className="text-xs text-gray-600 ml-1">{rating ? rating.toFixed(1) : 'New'}</span>
+                </div>
+            );
+        };
+
+        // LOCATION DETAIL MODAL
+        const LocationDetailModal = ({ location, reviews, onClose, onToggleSave, isSaved, onAddReview, onReactReview, onReplyReview, currentUser, currentHour }) => {
+            const [reviewForm, setReviewForm] = useState({ rating: 5, body: '' });
+            const [replyState, setReplyState] = useState({ reviewId: null, text: '' });
+
+            if (!location) return null;
+
+            const handleSubmitReview = (e) => {
+                e.preventDefault();
+                if (!reviewForm.body.trim()) return;
+                const newReview = {
+                    id: `r-${Date.now()}`,
+                    user: currentUser.name,
+                    rating: Number(reviewForm.rating),
+                    body: reviewForm.body.trim(),
+                    likes: 0,
+                    dislikes: 0,
+                    replies: [],
+                    createdAt: new Date().toISOString()
+                };
+                onAddReview(location.id, newReview);
+                setReviewForm({ rating: 5, body: '' });
+            };
+
+            const handleSubmitReply = (reviewId) => {
+                if (!replyState.text.trim()) return;
+                const reply = { id: `rep-${Date.now()}`, user: currentUser.name, text: replyState.text.trim(), createdAt: new Date().toISOString() };
+                onReplyReview(location.id, reviewId, reply);
+                setReplyState({ reviewId: null, text: '' });
+            };
+
+            const rating = calcRating(reviews);
+            const isClosed = !(currentHour >= location.open_hour && currentHour < location.close_hour);
+
+            return (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl relative">
+                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 bg-gray-100 p-2 rounded-full"><X className="w-4 h-4"/></button>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+                            <div className="space-y-3">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-gray-900">{location.name}</h2>
+                                        <p className="text-sm text-gray-500">{location.address}</p>
+                                    </div>
+                                    <button 
+                                        onClick={(e) => {e.stopPropagation(); onToggleSave(location.id);}}
+                                        className={`p-2 rounded-full shadow-md ${isSaved ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-600 hover:text-red-500'}`}
+                                        aria-label={isSaved ? 'Remove from Save List' : 'Save to list'}
+                                    >
+                                        {isSaved ? <HeartFill className="w-5 h-5"/> : <Heart className="w-5 h-5"/>}
+                                    </button>
+                                </div>
+                                <StarRow rating={rating} />
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <p className="text-xs uppercase text-gray-500 font-bold">WiFi</p>
+                                        <p className="font-semibold text-gray-900">{location.wifiStatus || 'Has WiFi'}</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <p className="text-xs uppercase text-gray-500 font-bold">Closing</p>
+                                        <p className="font-semibold text-gray-900">{formatClosingIn(location, currentHour)}</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <p className="text-xs uppercase text-gray-500 font-bold">Spaces</p>
+                                        <p className="font-semibold text-gray-900">{location.availableSpaces || 0} available</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <p className="text-xs uppercase text-gray-500 font-bold">Noise</p>
+                                        <p className="font-semibold text-gray-900">{location.noiseLevel || 'Varies'}</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <p className="text-xs uppercase text-gray-500 font-bold">Power</p>
+                                        <p className="font-semibold text-gray-900">{location.outlet_count} ({location.outlet_qty || 0} outlets)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-bold text-gray-900">Reviews</h3>
+                                <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                                    {reviews && reviews.length > 0 ? reviews.map(r => (
+                                        <div key={r.id} className="border border-gray-100 rounded-lg p-3">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center">{r.user ? r.user[0] : '?'}</div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <p className="font-semibold text-gray-900">{r.user || 'User'}</p>
+                                                            <StarRow rating={r.rating || 0} />
+                                                        </div>
+                                                        <span className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-700 mt-1">{r.body}</p>
+                                                    <div className="flex items-center gap-3 text-xs text-gray-600 mt-2">
+                                                        <button onClick={() => onReactReview(location.id, r.id, 'like')} className="flex items-center gap-1 hover:text-gray-900"><Check className="w-3 h-3"/> {r.likes || 0}</button>
+                                                        <button onClick={() => onReactReview(location.id, r.id, 'dislike')} className="flex items-center gap-1 hover:text-gray-900"><X className="w-3 h-3"/> {r.dislikes || 0}</button>
+                                                        <button onClick={() => setReplyState({ reviewId: r.id, text: '' })} className="underline">Reply</button>
+                                                    </div>
+                                                    {r.replies && r.replies.length > 0 && (
+                                                        <div className="mt-2 pl-3 border-l border-gray-200 space-y-2">
+                                                            {r.replies.map(rep => (
+                                                                <div key={rep.id} className="text-sm text-gray-700">
+                                                                    <span className="font-semibold">{rep.user}:</span> {rep.text}
+                                                                    <span className="text-xs text-gray-400 ml-2">{new Date(rep.createdAt).toLocaleDateString()}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    {replyState.reviewId === r.id && (
+                                                        <div className="mt-2 flex items-center gap-2">
+                                                            <input 
+                                                                type="text"
+                                                                value={replyState.text}
+                                                                onChange={(e) => setReplyState({ ...replyState, text: e.target.value })}
+                                                                className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-sm"
+                                                                placeholder="Write a reply"
+                                                            />
+                                                            <button className="text-sm font-semibold text-blue-600" onClick={() => handleSubmitReply(r.id)}>Post</button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div className="text-sm text-gray-500">No reviews yet.</div>
+                                    )}
+                                </div>
+
+                                <div className="border-t border-gray-200 pt-3">
+                                    <h4 className="text-sm font-bold text-gray-800 mb-2">Leave a review</h4>
+                                    <form onSubmit={handleSubmitReview} className="space-y-2">
+                                        <div className="flex items-center gap-3">
+                                            <label className="text-sm text-gray-600">Rating</label>
+                                            <select value={reviewForm.rating} onChange={(e) => setReviewForm({...reviewForm, rating: Number(e.target.value)})} className="border border-gray-200 rounded-lg px-2 py-1 text-sm">
+                                                {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <textarea
+                                                required
+                                                maxLength={2000}
+                                                value={reviewForm.body}
+                                                onChange={(e) => setReviewForm({...reviewForm, body: e.target.value})}
+                                                className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                                rows="3"
+                                                placeholder="Share your experience (max 2000 chars)"
+                                            ></textarea>
+                                            <div className="text-xs text-gray-500 text-right">{reviewForm.body.length}/2000</div>
+                                        </div>
+                                        <button type="submit" className="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-800">Submit Review</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // FRIEND INVITE DROPDOWN (HEADER)
+        const FriendInviteDropdown = ({ friends, onInviteClick }) => {
+            const [open, setOpen] = useState(false);
+            const [search, setSearch] = useState('');
+            const [codeSearch, setCodeSearch] = useState('');
+
+            const filteredFriends = useMemo(() => {
+                const term = search.trim().toLowerCase();
+                const code = codeSearch.trim().toUpperCase();
+                return (friends || []).filter(f => {
+                    const matchesText =
+                        !term ||
+                        f.name.toLowerCase().includes(term) ||
+                        (f.username || '').toLowerCase().includes(term);
+                    const matchesCode =
+                        !code || (f.userCode || '').toUpperCase().includes(code);
+                    return matchesText && matchesCode;
+                });
+            }, [friends, search, codeSearch]);
+
+            return (
+                <div className="relative">
+                    <button
+                        type="button"
+                        onClick={() => setOpen(!open)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg border border-gray-200 bg-white hover:bg-gray-50 shadow-sm"
+                    >
+                        <User className="w-4 h-4 text-gray-500" />
+                        <span>Friends</span>
+                        <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                            {(friends || []).length}
+                        </span>
+                    </button>
+
+                    {open && (
+                        <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-xl shadow-xl z-40 animate-pop-in">
+                            {/* Header row: +Add + code search */}
+                            <div className="flex items-center justify-end px-3 pt-3 pb-2 border-b border-gray-100">
+                                <input
+                                    type="text"
+                                    value={codeSearch}
+                                    onChange={e => setCodeSearch(e.target.value)}
+                                    placeholder="Search by user code"
+                                    className="ml-2 flex-1 border border-gray-200 rounded-lg px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                />
+                            </div>
+
+                            {/* Name/username search */}
+                            <div className="px-3 py-2 border-b border-gray-100">
+                                <div className="relative">
+                                    <Search className="w-3 h-3 text-gray-400 absolute left-2 top-1.5" />
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={e => setSearch(e.target.value)}
+                                        placeholder="Search friends..."
+                                        className="w-full pl-7 pr-2 py-1.5 text-[11px] border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Friend list */}
+                            <div className="max-h-64 overflow-y-auto py-1">
+                                {filteredFriends.length === 0 && (
+                                    <div className="px-3 py-3 text-xs text-gray-500">
+                                        No friends found. Try a different name or code.
+                                    </div>
+                                )}
+                                {filteredFriends.map(friend => (
+                                    <div
+                                        key={friend.id}
+                                        className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 text-sm"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {friend.avatar ? (
+                                                <img
+                                                    src={friend.avatar}
+                                                    className="w-8 h-8 rounded-full object-cover bg-gray-100"
+                                                />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold">
+                                                    {friend.name ? friend.name[0] : '?'}
+                                                </div>
+                                            )}
+                                            <div>
+                                                <div className="text-gray-900 text-xs font-semibold">
+                                                    {friend.name}
+                                                </div>
+                                                <div className="text-[11px] text-gray-500">
+                                                    @{friend.username}{' '}
+                                                    {friend.userCode && (
+                                                        <span className="ml-1 font-mono text-[10px] bg-gray-100 px-1 rounded">
+                                                            {friend.userCode}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => onInviteClick && onInviteClick(friend)}
+                                            className="text-[11px] font-semibold px-2 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                                        >
+                                            Invite
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="px-3 py-2 border-t border-gray-100 text-[10px] text-gray-500">
+                                Invites use your current location from your profile.
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // NEW: INVITE FRIEND MODAL (from location card)
+        const InviteFriendModal = ({ isOpen, onClose, friends, onInvite, locationName }) => {
+            if (!isOpen) return null;
+
+            return (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl animate-pop-in" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Invite a friend</h3>
+                                <p className="text-xs text-gray-500">to {locationName}</p>
+                            </div>
+                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5"/></button>
+                        </div>
+
+                        <div className="p-2 max-h-80 overflow-y-auto" style={{minHeight: '15rem'}}>
+                            {friends && friends.length > 0 ? (
+                                <div className="space-y-1">
+                                    {friends.map(friend => (
+                                        <div key={friend.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg">
+                                            <div className="flex items-center gap-3">
+                                                {friend.avatar ? (
+                                                    <img src={friend.avatar} className="w-10 h-10 rounded-full object-cover bg-gray-100" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-bold">
+                                                        {friend.name ? friend.name[0] : '?'}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <div className="font-semibold text-gray-900 text-sm">{friend.name}</div>
+                                                    <div className="text-xs text-gray-500">@{friend.username}</div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => onInvite(friend)}
+                                                className="text-sm font-semibold px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                                            >
+                                                Invite
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                                    <User className="w-8 h-8 text-gray-300 mb-2" />
+                                    <p className="text-sm font-semibold text-gray-700">No friends yet</p>
+                                    <p className="text-xs text-gray-500">You can add friends using their user code.</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-3 bg-gray-50 border-t border-gray-100 text-center">
+                            <button onClick={onClose} className="text-sm text-gray-600 font-medium hover:text-gray-800">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // INVITE POPUP (center of screen when you receive an invite)
+        const InvitePopup = ({ invite, onAccept, onReject }) => {
+            if (!invite) return null;
+
+            return (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-pop-in">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mb-3">
+                                <MapPin className="w-7 h-7" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                Study invite
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                                <span className="font-semibold">{invite.from.name}</span>{' '}
+                                invited you to study at{' '}
+                                <span className="font-semibold">{invite.locationName}</span>.
+                            </p>
+
+                            <div className="flex gap-3 w-full mt-5">
+                                <button
+                                    onClick={onReject}
+                                    className="flex-1 py-2 text-sm font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                >
+                                    Reject
+                                </button>
+                                <button
+                                    onClick={onAccept}
+                                    className="flex-1 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-md"
+                                >
+                                    Accept
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // SIMPLE TOAST (top-right confirmation)
+        const Toast = ({ message, type = 'success', onClose }) => {
+            if (!message) return null;
+            const base =
+                type === 'success'
+                    ? 'bg-green-600'
+                    : type === 'info'
+                    ? 'bg-blue-600'
+                    : 'bg-gray-800';
+
+            return (
+                <div className="fixed top-4 right-4 z-[90] animate-slide-in-right">
+                    <div className={`${base} text-white text-sm px-4 py-2 rounded-lg shadow-lg flex items-center gap-2`}>
+                        <Check className="w-4 h-4" />
+                        <span>{message}</span>
+                        <button
+                            onClick={onClose}
+                            className="ml-2 text-white/70 hover:text-white"
+                        >
+                            <X className="w-3 h-3" />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. MAIN DASHBOARD
+        const Dashboard = ({
+            currentUser,
+            onLogout,
+            onUpdateUser,
+            onToggleSave,
+            reviewsByLocation,
+            onAddReview,
+            onReactReview,
+            onReplyReview,
+            friends,
+            onSendInvite,
+            locations
+        }) => {
+            const [showProfile, setShowProfile] = useState(false);
+            const [modalConfig, setModalConfig] = useState({ isOpen: false, locationId: null, name: '' });
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [isLoading, setIsLoading] = useState(false);
+            const [activeLocationId, setActiveLocationId] = useState(null);
+            const [filters, setFilters] = useState({ wifiOnly: false, closing: 'any', outlets: 'any', noise: 'any' });
+            const [inviteModal, setInviteModal] = useState({ isOpen: false, location: null });
+            const [closingOpen, setClosingOpen] = useState(false);
+            const [outletsOpen, setOutletsOpen] = useState(false);
+            const [noiseOpen, setNoiseOpen] = useState(false);
+            const [searchTerm, setSearchTerm] = useState('');
+            
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const handleRefresh = () => {
+                setIsLoading(true);
+                setTimeout(() => {
+                    setCurrentTime(new Date());
+                    setIsLoading(false);
+                }, 800);
+            };
+
+            const currentHour = useMemo(() => currentTime.getHours() + (currentTime.getMinutes() / 60), [currentTime]);
+            const locationsWithStatus = useMemo(() => {
+                return locations.map(loc => {
+                    const isOpen = currentHour >= loc.open_hour && currentHour < loc.close_hour;
+                    const rating = calcRating(reviewsByLocation[loc.id] || []);
+                    return { ...loc, isOpen, rating };
+                });
+            }, [currentHour, reviewsByLocation, locations]);
+
+            const filteredLocations = useMemo(() => {
+                const term = searchTerm.trim().toLowerCase();
+                return locationsWithStatus.filter(loc => {
+                    if (filters.wifiOnly && (loc.wifiStatus === 'No WiFi')) return false;
+                    if (filters.outlets && filters.outlets !== 'any') {
+                        const outletValue = (loc.outlets || loc.outlet_count || '').toLowerCase();
+                        if (!outletValue.includes(filters.outlets)) return false;
+                    }
+                    if (filters.noise && filters.noise !== 'any') {
+                        const q = Number(loc.quiet_level);
+                        if (Number.isFinite(q)) {
+                            if (filters.noise === 'noisy' && !(q >= 0 && q <= 2)) return false;
+                            if (filters.noise === 'medium' && !(q >= 2.5 && q <= 3.5)) return false;
+                            if (filters.noise === 'quiet' && !(q > 3.5)) return false;
+                        }
+                    }
+                    const hoursLeft = loc.close_hour - currentHour;
+                    if (filters.closing === 'lt1' && !(hoursLeft > 0 && hoursLeft < 1)) return false;
+                    if (filters.closing === '1' && !(hoursLeft >= 1)) return false;
+                    if (filters.closing === '2' && !(hoursLeft >= 2)) return false;
+                    if (filters.closing === '3' && !(hoursLeft >= 3)) return false;
+                    if (term) {
+                        const hay = `${loc.name} ${loc.address}`.toLowerCase();
+                        if (!hay.includes(term)) return false;
+                    }
+                    return true;
+                });
+            }, [locationsWithStatus, filters, currentHour, searchTerm]);
+
+            const orderedLocations = useMemo(() => {
+                const open = filteredLocations.filter(l => l.isOpen);
+                const closed = filteredLocations.filter(l => !l.isOpen);
+                const noFilters = !filters.wifiOnly && filters.closing === 'any' && filters.outlets === 'any' && filters.noise === 'any' && !searchTerm.trim();
+                return noFilters ? [...open, ...closed] : filteredLocations;
+            }, [filteredLocations, filters, searchTerm]);
+
+            const handleDirectionsClick = (e, location) => {
+                e.preventDefault(); 
+                e.stopPropagation();
+                window.open(location.google_maps_link, '_blank');
+                setModalConfig({
+                    isOpen: true,
+                    locationId: location.id,
+                    name: location.name
+                });
+            };
+
+            const confirmUpdateStatus = () => {
+                onUpdateUser({
+                    ...currentUser,
+                    currentLocationId: modalConfig.locationId,
+                    locationVisible: true
+                });
+                setModalConfig({ ...modalConfig, isOpen: false });
+            };
+
+            const handleSendInviteFromCard = (friend) => {
+                // This function is passed to the new modal
+                onSendInvite(friend, inviteModal.location);
+                setInviteModal({ isOpen: false, location: null });
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col relative bg-gray-50">
+                    
+                    {/* Loading Overlay */}
+                    {isLoading && (
+                        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[70] flex items-center justify-center animate-fade-in">
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-600"></div>
+                                <div className="text-sm font-bold text-amber-800">Refreshing...</div>
+                            </div>
+                        </div>
+                    )}
+
+                    <StatusUpdateModal 
+                        isOpen={modalConfig.isOpen} 
+                        onClose={() => setModalConfig({...modalConfig, isOpen: false})}
+                        locationName={modalConfig.name}
+                        onConfirm={confirmUpdateStatus}
+                    />
+
+                    <ProfileDrawer 
+                        isOpen={showProfile} 
+                        onClose={() => setShowProfile(false)} 
+                        user={{...currentUser, locations}}
+                        isCurrentUser={true}
+                        onUpdateUser={onUpdateUser}
+                        onLogout={onLogout}
+                        onToggleSave={onToggleSave}
+                    />
+
+                    <InviteFriendModal
+                        isOpen={inviteModal.isOpen}
+                        onClose={() => setInviteModal({ isOpen: false, location: null })}
+                        friends={friends}
+                        onInvite={handleSendInviteFromCard}
+                        locationName={inviteModal.location?.name}
+                    />
+
+                    <nav className="bg-white border-b border-gray-200 sticky top-0 z-30 px-4 md:px-8 h-16 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-2 cursor-pointer group" onClick={handleRefresh}>
+                            <div className="bg-amber-600 p-2 rounded-lg text-white shadow-amber-200 shadow-md group-active:scale-95 transition-transform"><MapPin className="w-5 h-5" /></div>
+                            <span className="text-xl font-bold text-gray-900 tracking-tight hidden md:block select-none">WorkHere</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            {/* Search bar */}
+                            <div className="hidden md:flex items-center relative">
+                                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                                <input 
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search spots..."
+                                    className="pl-9 pr-3 py-2 w-48 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                />
+                            </div>
+
+                            {/* Friend invite dropdown */}
+                            <FriendInviteDropdown
+                                friends={friends}
+                                onInviteClick={onSendInvite}
+                            />
+
+                            {/* Time */}
+                            <div className="text-xs text-gray-500 hidden sm:block">
+                                Open Spots for <span className="font-bold text-gray-900">{currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+
+                            {/* Profile button */}
+                            <button onClick={() => setShowProfile(true)} className="ml-2 relative group">
+                                {currentUser.avatar ? (
+                                    <img src={currentUser.avatar} className="w-10 h-10 rounded-full border-2 border-gray-100 group-hover:border-amber-400 transition-colors object-cover bg-gray-200" />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full border-2 border-gray-100 group-hover:border-amber-400 transition-colors beige-default flex items-center justify-center text-amber-800/40 font-bold text-sm">
+                                        {currentUser.name[0]}
+                                    </div>
+                                )}
+                            </button>
+                        </div>
+                    </nav>
+
+                    <main className="max-w-6xl w-full mx-auto px-4 py-8 flex-1">
+                         <div className="animate-fade-in">
+                            <div className="mb-8">
+                                <h1 className="text-3xl font-bold text-gray-900 mb-2">Hello, {currentUser.name.split(' ')[0]} 👋</h1>
+                                <p className="text-gray-500">Here are the study spots currently open near you.</p>
+                            </div>
+
+                            <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm mb-6 flex flex-wrap gap-3 items-center">
+                                <button 
+                                    onClick={() => setFilters({...filters, wifiOnly: !filters.wifiOnly})}
+                                    className={`text-sm font-semibold px-3 py-2 rounded-lg border ${filters.wifiOnly ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}
+                                >
+                                    WiFi Only
+                                </button>
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => { setNoiseOpen(!noiseOpen); setOutletsOpen(false); setClosingOpen(false); }}
+                                        className={`text-sm font-semibold px-3 py-2 rounded-lg border flex items-center gap-1 ${filters.noise !== 'any' ? 'bg-purple-100 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}
+                                    >
+                                        Noise Level
+                                        <span className="text-xs">▾</span>
+                                    </button>
+                                    {noiseOpen && (
+                                        <div className="absolute mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 w-44">
+                                            {[
+                                                { val: 'noisy', label: 'Noisy' },
+                                                { val: 'medium', label: 'Medium' },
+                                                { val: 'quiet', label: 'Quiet' },
+                                                { val: 'any', label: 'Any noise level' },
+                                            ].map(opt => (
+                                                <button 
+                                                    key={opt.val}
+                                                    onClick={() => { setFilters({...filters, noise: opt.val}); setNoiseOpen(false);} }
+                                                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => { setOutletsOpen(!outletsOpen); setClosingOpen(false); setNoiseOpen(false); }}
+                                        className={`text-sm font-semibold px-3 py-2 rounded-lg border flex items-center gap-1 ${filters.outlets !== 'any' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}
+                                    >
+                                        Outlets
+                                        <span className="text-xs">▾</span>
+                                    </button>
+                                    {outletsOpen && (
+                                        <div className="absolute mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 w-44">
+                                            {[
+                                                { val: 'available', label: 'Available' },
+                                                { val: 'abundant', label: 'Abundant' },
+                                                { val: 'limited', label: 'Limited' },
+                                                { val: 'excellent', label: 'Excellent' },
+                                                { val: 'any', label: 'Any outlets' },
+                                            ].map(opt => (
+                                                <button 
+                                                    key={opt.val}
+                                                    onClick={() => { setFilters({...filters, outlets: opt.val}); setOutletsOpen(false);} }
+                                                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <button 
+                                        onClick={() => { setClosingOpen(!closingOpen); setOutletsOpen(false); setNoiseOpen(false);} }
+                                        className={`text-sm font-semibold px-3 py-2 rounded-lg border flex items-center gap-1 ${filters.closing !== 'any' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}
+                                    >
+                                        Closing In
+                                        <span className="text-xs">▾</span>
+                                    </button>
+                                    {closingOpen && (
+                                        <div className="absolute mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 w-40">
+                                            {[
+                                                { val: 'lt1', label: 'Less than 1 hour' },
+                                                { val: '1', label: '1+ hours' },
+                                                { val: '2', label: '2+ hours' },
+                                                { val: '3', label: '3+ hours' },
+                                                { val: 'any', label: 'Any closing time' },
+                                            ].map(opt => (
+                                                <button 
+                                                    key={opt.val}
+                                                    onClick={() => { setFilters({...filters, closing: opt.val}); setClosingOpen(false);} }
+                                                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {orderedLocations.length > 0 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {orderedLocations.map(loc => {
+                                        const isSaved = currentUser.saveList && currentUser.saveList.includes(loc.id); // Assumes loc.id is a number
+                                        const isClosed = !loc.isOpen;
+                                        return (
+                                        <div key={loc.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all group relative ${isClosed ? 'opacity-70 grayscale' : ''}`} onClick={() => setActiveLocationId(loc.id)}>
+                                            <div className="h-48 overflow-hidden relative">
+                                                <img 
+                                                    src={loc.image} 
+                                                    onError={handleImageError}
+                                                    referrerPolicy="no-referrer"
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                                <div className="absolute top-3 right-12 bg-black/60 text-white text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1">
+                                                    <span>{loc.rating ? `${loc.rating}★` : 'New'}</span>
+                                                </div>
+                                                <button 
+                                                    onClick={(e) => {e.stopPropagation(); onToggleSave(loc.id);}}
+                                                    className={`absolute top-3 right-3 p-2 rounded-full shadow-md ${isSaved ? 'bg-white text-red-500' : 'bg-white/80 text-gray-700 hover:text-red-500'}`}
+                                                    aria-label={isSaved ? 'Remove from Save List' : 'Save to list'}
+                                                >
+                                                    {isSaved ? <HeartFill className="w-5 h-5"/> : <Heart className="w-5 h-5"/>}
+                                                </button>
+                                                {isClosed && (
+                                                    <div className="absolute bottom-3 right-3 bg-white/80 text-gray-800 text-xs font-bold px-2 py-1 rounded-md border border-gray-200 shadow-sm">
+                                                        Closed
+                                                    </div>
+                                                )}
+                                                <div className="absolute bottom-3 left-3 right-3">
+                                                    <h3 className="text-white font-bold text-lg leading-tight shadow-black drop-shadow-md">{loc.name}</h3>
+                                                    <div className="flex items-center gap-2 text-white/90 text-xs mt-1 truncate">
+                                                        <Clock className="w-3 h-3" /> {loc.hours_string}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 space-y-3">
+                                                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                                                    <div className="flex items-center justify-between" title={loc.wifi_speed}>
+                                                        <span className="text-gray-500 flex items-center gap-1 col-span-1"><Wifi className="w-3 h-3"/> WiFi</span>
+                                                        <span className="font-medium text-gray-700">{loc.wifi_status || 'Varies'}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between" title={loc.seats}>
+                                                        <span className="text-gray-500 flex items-center gap-1 col-span-1"><User className="w-3 h-3"/> Spaces</span>
+                                                        <span className="font-medium text-gray-700">{loc.available_spaces || 'Varies'}</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="border-t border-gray-100 pt-3 mt-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <button 
+                                                            onClick={(e) => handleDirectionsClick(e, loc)}
+                                                            className={`flex-1 ${isClosed ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200'} py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 text-sm border`}
+                                                        >
+                                                            <Navigation className="w-4 h-4" /> {isClosed ? 'View Details' : 'Get Directions'}
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); setInviteModal({ isOpen: true, location: loc }); }}
+                                                            className="py-2.5 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 text-sm border bg-gray-900 text-white hover:bg-gray-700"
+                                                        >
+                                                            Invite
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                    <LocationDetailModal 
+                        location={locations.find(l => l.id === activeLocationId)}
+                        reviews={activeLocationId ? (reviewsByLocation[activeLocationId] || []) : []}
+                        onClose={() => setActiveLocationId(null)}
+                        onToggleSave={onToggleSave}
+                        isSaved={currentUser.saveList && currentUser.saveList.includes(activeLocationId)}
+                        onAddReview={onAddReview}
+                        onReactReview={onReactReview}
+                        onReplyReview={onReplyReview}
+                        currentUser={currentUser}
+                        currentHour={currentHour}
+                    />
+                </div>
+            );
+        };
+
+        // 5. LANDING PAGE (PRE-LOGIN)
+        const Landing = ({ onShowAuth }) => {
+            const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+            const [contactError, setContactError] = useState('');
+            const [contactSuccess, setContactSuccess] = useState('');
+
+            const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+            const handleSubmitContact = (e) => {
+                e.preventDefault();
+                setContactError('');
+                setContactSuccess('');
+                if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) {
+                    setContactError('Please fill out all required fields.');
+                    return;
+                }
+                if (!validateEmail(contactForm.email.trim())) {
+                    setContactError('Please enter a valid email address.');
+                    return;
+                }
+                if (contactForm.message.length > 2000) {
+                    setContactError('Message must be 2000 characters or fewer.');
+                    return;
+                }
+                setContactSuccess('Thanks for reaching out! We received your message and will reply to you at workhere.team@gmail.com.');
+                setContactForm({ name: '', email: '', message: '' });
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-white">
+                    <header className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-amber-600 text-white p-2 rounded-lg shadow-sm"><MapPin className="w-5 h-5"/></div>
+                            <span className="font-bold text-xl text-gray-900">WorkHere</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => onShowAuth('login')} className="text-sm font-semibold text-gray-700 hover:text-gray-900">Log In</button>
+                            <button onClick={() => onShowAuth('signup')} className="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 shadow-sm">Sign Up</button>
+                        </div>
+                    </header>
+
+                    <main className="max-w-6xl mx-auto px-4 pb-16">
+                        <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center py-10">
+                            <div className="space-y-6">
+                                <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full uppercase tracking-wide">For De Anza Students</span>
+                                <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
+                                    Find the best study spots around Cupertino in minutes.
+                                </h1>
+                                <p className="text-gray-600 leading-relaxed">
+                                    WorkHere is a hyper-local platform built for De Anza students to quickly find the best study spots around Cupertino — from libraries to cafes to quiet corners near campus. Instead of relying on generic map apps, WorkHere uses student-focused filters like WiFi strength, noise level, seating, outlets, budget, and hours to help users choose the perfect environment for studying. Students can also leave reviews, share real-time feedback, and get directions through Google Maps. WorkHere turns studying into a smoother, more connected experience, with more community-driven features coming soon.
+                                </p>
+                                <div className="flex flex-wrap gap-3">
+                                    <button onClick={() => onShowAuth('signup')} className="bg-amber-600 text-white font-semibold px-5 py-3 rounded-lg shadow-md hover:bg-amber-700 transition flex items-center gap-2">
+                                        Explore <span aria-hidden="true">→</span>
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap gap-4 pt-2 text-sm text-gray-600">
+                                    <div className="flex items-center gap-2"><Wifi className="w-4 h-4 text-amber-600"/> WiFi + outlets</div>
+                                    <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-amber-600"/> Live hours</div>
+                                    <div className="flex items-center gap-2"><User className="w-4 h-4 text-amber-600"/> Student reviews</div>
+                                </div>
+                            </div>
+                            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs uppercase font-bold text-gray-500">Noise</p>
+                                        <p className="font-semibold text-gray-900 mt-1">Quiet</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs uppercase font-bold text-gray-500">WiFi</p>
+                                        <p className="font-semibold text-gray-900 mt-1">Strong</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs uppercase font-bold text-gray-500">Outlets</p>
+                                        <p className="font-semibold text-gray-900 mt-1">Plenty</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-4">
+                                        <p className="text-xs uppercase font-bold text-gray-500">Budget</p>
+                                        <p className="font-semibold text-gray-900 mt-1">$ - $$</p>
+                                    </div>
+                                </div>
+                                <div className="mt-6">
+                                    <div className="h-48 rounded-xl overflow-hidden relative">
+                                        <img src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=900&q=80" className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                                        <div className="absolute bottom-3 left-4 text-white">
+                                            <p className="text-sm uppercase tracking-wide text-white/80">Featured Spot</p>
+                                            <h3 className="text-xl font-bold">Kirsch Center Study Lounge</h3>
+                                            <p className="text-xs text-white/80">On campus · Strong WiFi · Many outlets</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+
+                    <footer className="bg-gray-900 text-white py-12">
+                        <div className="max-w-5xl mx-auto px-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-2">Contact / Feedback</h2>
+                                    <p className="text-gray-300 text-sm">We’d love to hear from you. Share feedback, bug reports, or ideas.</p>
+                                    <p className="text-gray-400 text-xs mt-2">Messages are sent to workhere.team@gmail.com.</p>
+                                </div>
+                                <form onSubmit={handleSubmitContact} className="bg-white text-gray-900 rounded-xl p-5 shadow-lg space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Name *</label>
+                                        <input 
+                                            type="text"
+                                            required
+                                            value={contactForm.name}
+                                            onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                                            className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                            placeholder="Your name"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Email *</label>
+                                        <input 
+                                            type="email"
+                                            required
+                                            value={contactForm.email}
+                                            onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                                            className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                            placeholder="you@example.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Message *</label>
+                                        <textarea
+                                            required
+                                            maxLength={2000}
+                                            value={contactForm.message}
+                                            onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                                            className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                                            rows="4"
+                                            placeholder="How can we help?"
+                                        ></textarea>
+                                        <div className="text-xs text-gray-500 text-right">{contactForm.message.length}/2000</div>
+                                    </div>
+                                    {contactError && <div className="text-red-600 text-xs bg-red-50 border border-red-100 rounded-md p-2">{contactError}</div>}
+                                    {contactSuccess && <div className="text-green-600 text-xs bg-green-50 border border-green-100 rounded-md p-2">{contactSuccess}</div>}
+                                    <button type="submit" className="w-full bg-gray-900 text-white font-semibold py-3 rounded-lg hover:bg-gray-800 transition">Send Message</button>
+                                </form>
+                            </div>
+                            <div className="text-gray-500 text-xs mt-6">© {new Date().getFullYear()} WorkHere. Built for De Anza students.</div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        function App() {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [remembered, setRemembered] = useState(false);
+            const [showAuth, setShowAuth] = useState(false);
+            const [authMode, setAuthMode] = useState('login');
+            const [reviewsByLocation, setReviewsByLocation] = useState(DEFAULT_REVIEWS);
+            const [profiles, setProfiles] = useState({});
+            const [pendingEmail, setPendingEmail] = useState('');
+            const [friends, setFriends] = useState(SAMPLE_FRIENDS);
+            const [incomingInvite, setIncomingInvite] = useState(null);
+            const [locations, setLocations] = useState([]);
+            const [toast, setToast] = useState(null);
+
+            const safeParseLocal = (key, fallback) => {
+                try {
+                    const raw = localStorage.getItem(key);
+                    return raw ? JSON.parse(raw) : fallback;
+                } catch (e) {
+                    return fallback;
+                }
+            };
+
+            // Load from storage on first render
+            useEffect(() => {
+                // Fetch locations from Supabase
+                const fetchLocations = async () => {
+                    const { data, error } = await supabase.from('study_spots').select('*').order('id');
+                    if (error) {
+                        console.error('Error fetching locations:', error);
+                        return;
+                    }
+                    
+                    // Transform data to match the structure components expect
+                    const transformedData = data.map(loc => {
+                        const normalizedImage = normalizeImageUrl(loc.image_url || loc.image);
+                        return {
+                            // Spread the original location data first
+                            ...loc,
+                            // Then, define or override properties for the UI
+                            distance: '1.0 mi', // Placeholder
+                            distance_miles: 1.0, // Placeholder
+                            wifi_stars: { 'Excellent': 5, 'Fast': 4, 'Good': 3, 'Moderate': 2 }[loc.wifi_speed] || 3,
+                            wifi_status: loc.wifi_speed || 'Varies',
+                            outlet_count: { 'Abundant': 'Many', 'Limited': 'Limited', 'Yes': 'Some', 'Available': 'Some' }[loc.outlets] || 'Varies',
+                            outlet_qty: 10, // Placeholder
+                            open_hour: 8.0, // Placeholder, parsing hours is complex
+                            close_hour: 21.0, // Placeholder
+                            hours_string: loc.hours_weekday || 'Hours vary',
+                            fullness: 50, // Placeholder
+                            available_spaces: loc.seats || 'Varies',
+                            noise_level: loc.quiet_level ? `${loc.quiet_level}/5 Quiet` : 'Varies',
+                            budget: loc.category === 'Library' || loc.category === 'Campus Facility' ? '$' : '$$',
+                            image: normalizedImage
+                        };
+                    });
+
+                    setLocations(transformedData);
+                };
+
+                fetchLocations();
+
+
+                // Load user data from local storage
+                const storedReviews = safeParseLocal('workhere_reviews', DEFAULT_REVIEWS);
+                const storedProfiles = safeParseLocal('workhere_profiles', {});
+                if (storedReviews) {
+                    setReviewsByLocation(storedReviews);
+                }
+                if (storedProfiles) {
+                    setProfiles(storedProfiles);
+                }
+
+                supabase.auth.getSession().then(({ data }) => {
+                    if (data && data.session) {
+                        const user = data.session.user;
+                        const profile = storedProfiles[user.id] || { name: user.user_metadata?.name || user.email.split('@')[0], saveList: [], avatar: null, major: '', locationVisible: false, currentLocationId: null, userCode: generateUserCode() };
+                        setProfiles(prev => ({ ...prev, [user.id]: profile }));
+                        setCurrentUser({ ...profile, email: user.email, id: user.id });
+                        setRemembered(true);
+                    }
+                });
+
+                const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+                    if (session && session.user) {
+                        const user = session.user;
+                        const profile = storedProfiles[user.id] || { name: user.user_metadata?.name || user.email.split('@')[0], saveList: [], avatar: null, major: '', locationVisible: false, currentLocationId: null, userCode: generateUserCode() };
+                        setProfiles(prev => ({ ...prev, [user.id]: profile }));
+                        setCurrentUser({ ...profile, email: user.email, id: user.id });
+                        setPendingEmail('');
+                    } else {
+                        setCurrentUser(null);
+                    }
+                });
+
+                return () => {
+                    authListener.subscription.unsubscribe();
+                };
+            }, []);
+
+            // Persist users
+            useEffect(() => {
+                localStorage.setItem('workhere_profiles', JSON.stringify(profiles));
+            }, [profiles]);
+
+            useEffect(() => {
+                localStorage.setItem('workhere_reviews', JSON.stringify(reviewsByLocation));
+            }, [reviewsByLocation]);
+
+            const syncProfile = (userId, updates) => {
+                setProfiles(prev => {
+                    const existing = prev[userId] || { name: 'Student', saveList: [], avatar: null, major: '', locationVisible: false, currentLocationId: null, userCode: generateUserCode() };
+                    const merged = { ...existing, ...updates };
+                    return { ...prev, [userId]: merged };
+                });
+                if (currentUser && currentUser.id === userId) {
+                    setCurrentUser(prev => ({ ...prev, ...updates }));
+                }
+            };
+
+            const handleSignup = async ({ name, email, password }) => {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: { data: { name } }
+                });
+                if (error) {
+                    return { error: error.message };
+                }
+                if (data?.user) {
+                    const profile = { name: name || email.split('@')[0], saveList: [], avatar: null, major: '', locationVisible: false, currentLocationId: null, userCode: generateUserCode() };
+                    syncProfile(data.user.id, profile);
+                    setPendingEmail(email);
+                    return { message: `Account created for ${email}. Please confirm your email before signing in.` };
+                }
+                return { message: `Account created for ${email}. Please check your email to confirm if required.` };
+            };
+
+            const handleLogin = async (email, password, remember) => {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    if (error.message && error.message.toLowerCase().includes('confirm')) {
+                        setPendingEmail(email);
+                    }
+                    return { error: error.message };
+                }
+                const user = data?.user;
+                if (!user) return { error: "Unable to log in. Please try again." };
+                const profile = profiles[user.id] || { name: user.user_metadata?.name || email.split('@')[0], saveList: [], avatar: null, major: '', locationVisible: false, currentLocationId: null, userCode: generateUserCode() };
+                syncProfile(user.id, profile);
+                setCurrentUser({ ...profile, email: user.email, id: user.id });
+                setRemembered(Boolean(remember));
+                return { success: true };
+            };
+
+            const handleLogout = async () => {
+                await supabase.auth.signOut();
+                setCurrentUser(null);
+                setRemembered(false);
+                setShowAuth(false);
+            };
+
+            const handleUpdateUser = (updatedUser) => {
+                if (!currentUser) return;
+                syncProfile(currentUser.id, updatedUser);
+            };
+
+            const handleToggleSave = (locationId) => {
+                if (!currentUser) return;
+                const currentProfile = profiles[currentUser.id] || { saveList: [] };
+                const alreadySaved = currentProfile.saveList && currentProfile.saveList.includes(locationId);
+                const updatedList = alreadySaved
+                    ? currentProfile.saveList.filter(id => id !== locationId)
+                    : [...(currentProfile.saveList || []), locationId];
+                const updatedUser = { ...currentProfile, saveList: updatedList };
+                syncProfile(currentUser.id, updatedUser);
+            };
+
+            const handleAddReview = (locationId, review) => {
+                setReviewsByLocation(prev => {
+                    const existing = prev[locationId] || [];
+                    return { ...prev, [locationId]: [...existing, review] };
+                });
+            };
+
+            const handleReactReview = (locationId, reviewId, type) => {
+                setReviewsByLocation(prev => {
+                    const updated = (prev[locationId] || []).map(r => {
+                        if (r.id === reviewId) {
+                            if (type === 'like') return { ...r, likes: (r.likes || 0) + 1 };
+                            if (type === 'dislike') return { ...r, dislikes: (r.dislikes || 0) + 1 };
+                        }
+                        return r;
+                    });
+                    return { ...prev, [locationId]: updated };
+                });
+            };
+
+            const handleReplyReview = (locationId, reviewId, reply) => {
+                setReviewsByLocation(prev => {
+                    const updated = (prev[locationId] || []).map(r => {
+                        if (r.id === reviewId) {
+                            const replies = r.replies ? [...r.replies, reply] : [reply];
+                            return { ...r, replies };
+                        }
+                        return r;
+                    });
+                    return { ...prev, [locationId]: updated };
+                });
+            };
+
+            // Send an invite TO a friend (uses your current location)
+            const handleSendInvite = async (friend, locationOverride) => {
+                if (!currentUser) return;
+
+                const location = locationOverride || locations.find(
+                    (l) => l.id === currentUser.currentLocationId
+                );
+
+                // TODO: save to Supabase friend_invites table here
+                // await supabase.from('friend_invites').insert({
+                //   sender_id: currentUser.id,
+                //   receiver_id: friend.id,
+                //   location_id: currentUser.currentLocationId,
+                //   message: 'Study together?'
+                // });
+
+                setToast({
+                    type: 'success',
+                    message: `Invite sent to ${friend.name}`
+                });
+            };
+
+            // Simulate receiving an invite (real version would use Supabase realtime)
+            const handleReceiveInvite = (inviteRow) => {
+                setIncomingInvite(inviteRow);
+            };
+
+            const handleAcceptInvite = () => {
+                if (!incomingInvite || !currentUser) {
+                    setIncomingInvite(null);
+                    return;
+                }
+
+                const location = locations.find(
+                    (l) => l.name === incomingInvite.locationName
+                );
+                if (location) {
+                    syncProfile(currentUser.id, {
+                        currentLocationId: location.id,
+                        locationVisible: true
+                    });
+                }
+
+                // TODO: update Supabase friend_invites status to 'accepted'
+                setToast({
+                    type: 'success',
+                    message: `You joined ${incomingInvite.from.name}'s study spot`
+                });
+                setIncomingInvite(null);
+            };
+
+            const handleRejectInvite = () => {
+                // TODO: update Supabase friend_invites status to 'rejected'
+                setToast({
+                    type: 'info',
+                    message: 'Invite dismissed'
+                });
+                setIncomingInvite(null);
+            };
+
+            // Expose helper to test receiving an invite from console
+            useEffect(() => {
+                window.__receiveTestInvite = (invite) => handleReceiveInvite(invite);
+            }, []);
+
+            if (!currentUser) {
+                if (!showAuth) {
+                    return <Landing onShowAuth={(mode) => { setAuthMode(mode); setShowAuth(true); }} />;
+                }
+                return (
+                    <AuthScreen 
+                        initialMode={authMode}
+                        onBack={() => setShowAuth(false)}
+                        onLogin={handleLogin} 
+                        onSignup={handleSignup}
+                        pendingEmail={pendingEmail} 
+                    />
+                );
+            }
+
+            return (
+                <>
+                    <Dashboard 
+                        currentUser={currentUser} 
+                        onUpdateUser={handleUpdateUser} 
+                        onLogout={handleLogout} 
+                        onToggleSave={handleToggleSave}
+                        reviewsByLocation={reviewsByLocation}
+                        onAddReview={handleAddReview}
+                        onReactReview={handleReactReview}
+                        onReplyReview={handleReplyReview}
+                        friends={friends}
+                        onSendInvite={handleSendInvite}
+                        locations={locations}
+                    />
+
+                    {/* Center invite popup when you receive an invite */}
+                    <InvitePopup
+                        invite={incomingInvite}
+                        onAccept={handleAcceptInvite}
+                        onReject={handleRejectInvite}
+                    />
+
+                    {/* Top-right confirmation message */}
+                    <Toast
+                        message={toast?.message}
+                        type={toast?.type}
+                        onClose={() => setToast(null)}
+                    />
+                </>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+
+
