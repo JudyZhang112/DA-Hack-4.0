@@ -49,40 +49,19 @@ WorkHere allows students to quickly find study locations through meaningful data
 **Backend:** Node.js + Supabase  
 **Database:** Supabase (PostgreSQL + Auth + Storage)
 
----
+## 4. 
 
-## 4. Challenges We Ran Into
+1. Open the project
+index.html ← the entire app runs here
 
-- **Mapping & Geolocation Complexity**  
-  Integrating accurate location data with Google Maps required precise syncing.
-- **Choosing the Most Meaningful Filters**  
-  We had to identify which student demands mattered most and how to make filtering fast and intuitive.
-- **Time Constraints During Hackathon**
-  Deciding which features to prioritize was difficult — balancing functionality vs. deadlines.
+2. Run the app
+Double-click index.html, or
+Right-click → Open With → Chrome/Safari/Firefox
 
----
-
-## 5. Accomplishments We’re Proud Of
-
-- Built a **fully functional student-focused platform** for finding study spots.
-- Implemented **real-time feedback and Google Maps directions.**
-- Enabled **profile-based study invitations**, fostering student collaboration.
-- Created a project that is **both practical and community-driven** for Bay Area students.
 
 ---
 
-## 6. What We Learned
-
-- How to **optimize location and map rendering** for real-time usage.
-- That simple, meaningful filters matter more than complicated criteria.
-- The importance of **balancing user experience with fast backend performance.**
-- How to collaborate effectively under tight hackathon time limits.
-- Designing systems with **student privacy and safety** in mind.
-- 
-
----
-
-## 7. What’s Next for WorkHere
+## 5. What’s Next for WorkHere
 
 **Expand beyond the Bay Area — statewide California coverage**  
 **Private messaging between friends**  
@@ -95,12 +74,6 @@ WorkHere allows students to quickly find study locations through meaningful data
 
 Interested in contributing? Feel free to submit a pull request or open an issue!
 
----
 
-### License
-
-MIT License — free to use and modify.
-
----
 
 ✨ *Work smarter. Study together. Welcome to WorkHere.*
